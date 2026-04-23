@@ -1,0 +1,133 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define SIZE 8
+#define MINES 10
+
+char board[SIZE][SIZE];
+char display[SIZE][SIZE];
+
+// Initialize boards
+void initBoards() {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            board[i][j] = '0';
+            display[i][j] = '*';
+        }
+    }
+}
+
+// Place mines randomly
+void placeMines() {
+    int count = 0;
+    while (count < MINES) {
+        int r = rand() % SIZE;
+        int c = rand() % SIZE;
+        if (board[r][c] != 'M') {
+            board[r][c] = 'M';
+            count++;
+        }
+    }
+}
+
+// Count adjacent mines
+int countMines(int row, int col) {
+    int count = 0;
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            int r = row + i;
+            int c = col + j;
+            if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) {
+                if (board[r][c] == 'M') count++;
+            }
+        }
+    }
+    return count;
+}
+
+// Display board
+void printBoard() {
+    printf("\n   ");
+    for (int i = 0; i < SIZE; i++) printf("%d ", i);
+    printf("\n");
+
+    for (int i = 0; i < SIZE; i++) {
+        printf("%d  ", i);
+        for (int j = 0; j < SIZE; j++) {
+            printf("%c ", display[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+// Reveal cell
+int reveal(int row, int col) {
+    if (row < 0 || row >= SIZE || col < 0 || col >= SIZE)
+        return 1;
+
+    if (display[row][col] != '*')
+        return 1;
+
+    if (board[row][col] == 'M') {
+        display[row][col] = 'M';
+        return 0; // game over
+    }
+
+    int mines = countMines(row, col);
+    display[row][col] = mines + '0';
+
+    // Auto reveal neighbors if no mines
+    if (mines == 0) {
+        for (int i = -1; i <= 1; i++)
+            for (int j = -1; j <= 1; j++)
+                reveal(row + i, col + j);
+    }
+    return 1;
+}
+
+// Check win
+int checkWin() {
+    int cells = 0;
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            if (display[i][j] != '*')
+                cells++;
+
+    return (cells == SIZE * SIZE - MINES);
+}
+
+int main() {
+    int row, col;
+    srand(time(NULL));
+
+    initBoards();
+    placeMines();
+
+    printf("=== Minesweeper Game ===\n");
+
+    while (1) {
+        printBoard();
+        printf("Enter row and column: ");
+        scanf("%d %d", &row, &col);
+
+        if (!reveal(row, col)) {
+            printf("\n💥 Game Over! You hit a mine.\n");
+            break;
+        }
+
+        if (checkWin()) {
+            printf("\n🎉 You Win!\n");
+            break;
+        }
+    }
+
+    // Show final board
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            if (board[i][j] == 'M')
+                display[i][j] = 'M';
+
+    printBoard();
+    return 0;
+}
